@@ -1,0 +1,148 @@
+#include <iostream>
+#include <fstream>
+using namespace std;
+
+class Node
+{
+public:
+	Node* up;
+	Node* right;
+	Node* down;
+	Node* left;
+
+	char type;
+
+	Node()
+	{
+		up = NULL;
+		right = NULL;
+		down = NULL;
+		left = NULL;
+		type = 'O';
+	}
+};
+
+class Maze
+{
+private:
+	Node* head;
+	int X, Y;
+
+public:
+	Maze(int x, int y)
+	{
+		Node** nodes = new Node*[x];
+		for (int i = 0; i < x; i++) {
+			nodes[i] = new Node[y];
+		}
+
+		head = &nodes[0][0];
+		this->X = x;
+		this->Y = y;
+
+		// link left and right
+		for (int j = 0; j < y; j++) {
+			for (int i = 0; i < x - 1; i++) {
+				nodes[i][j].right = &nodes[i + 1][j];
+				nodes[i + 1][j].left = &nodes[i][j];
+			}
+		}
+
+		// link up and down
+		for (int i = 0; i < x; i++) {
+			for (int j = 0; j < y - 1; j++) {
+				nodes[i][j].down = &nodes[i][j + 1];
+				nodes[i][j + 1].up = &nodes[i][j];
+			}
+		}
+	}
+
+	Node* get(int x, int y)
+	{
+		Node* currentNode = head;
+
+		for (int i = 0; i < x; i++) {
+			currentNode = currentNode->right;
+		}
+
+		for (int i = 0; i < y; i++) {
+			currentNode = currentNode->down;
+		}
+
+		return currentNode;
+	}
+
+	void print()
+	{
+		Node* row = head;
+		Node* currentNode = head;
+
+		for (int j = 0; j < Y; j++) {
+			for (int i = 0; i < X; i++) {
+				cout << currentNode->type;
+				currentNode = currentNode->right;
+			}
+			cout << endl;
+			row = row->down;
+			currentNode = row;
+		}
+	}
+};
+
+void getType(ifstream& inputFile, Maze maze, char type)
+{
+	int x, y;
+	char skipChar;
+
+	while (1) {
+		inputFile >> skipChar;
+		if (skipChar == '(') {
+			break;
+		}
+	}
+
+	inputFile >> x;
+	inputFile >> skipChar;
+	inputFile >> y;
+
+	Node* node = maze.get(x, y);
+	node->type = type;
+}
+
+int main()
+{
+	//get input_file
+	ifstream inputFile;
+	inputFile.open("input_file.txt");
+
+	int X, Y;
+
+	char skipChar;
+
+	inputFile >> X;
+	inputFile >> skipChar;
+	inputFile >> Y;
+
+	cout << "Printing " << X << "x" << Y << " maze:" << endl;
+	fflush(stdout);
+
+	Maze maze(X, Y);
+
+	getType(inputFile, maze, 'S');
+	getType(inputFile, maze, 'F');
+
+	while (!inputFile.eof()) {
+		getType(inputFile, maze, 'W');
+		inputFile >> skipChar;
+		inputFile >> skipChar;
+		if (skipChar == '.') {
+			break;
+		}
+	}
+	inputFile.close();
+
+	maze.print();
+
+	return 0;
+}
+
